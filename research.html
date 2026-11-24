@@ -1,1 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research // TechnicalSemantics</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #111;
+            color: #e0e0e0;
+            line-height: 1.65;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 20px 0;
+            border-bottom: 1px solid #333;
+        }
+        .logo a {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4caf50;
+            text-decoration: none;
+        }
+        nav a {
+            color: #e0e0e0;
+            text-decoration: none;
+            margin-left: 20px;
+            transition: color 0.3s ease;
+        }
+        nav a:hover, nav a.active {
+            color: #4caf50;
+        }
+        h1, h2, h3 {
+            font-weight: normal;
+            color: #4caf50;
+        }
+        h1 {
+            font-size: clamp(36px, 6vw, 60px);
+            margin: 40px 0 16px;
+        }
+        .preamble {
+            border-left: 2px solid #4caf50;
+            padding-left: 18px;
+            margin-bottom: 48px;
+            color: #c8c8c8;
+        }
+        .preamble p {
+            margin: 0 0 12px;
+        }
+        .entry {
+            background-color: #181818;
+            border: 1px solid #2e2e2e;
+            border-radius: 5px;
+            padding: 28px;
+            margin-bottom: 36px;
+        }
+        .entry-tag {
+            font-size: 0.8em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #ffa500;
+            margin-bottom: 6px;
+        }
+        .entry h2 {
+            font-size: 30px;
+            margin: 0 0 14px;
+        }
+        .commentary h3 {
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #9ed8a0;
+            margin: 22px 0 8px;
+        }
+        .commentary p {
+            margin: 0 0 12px;
+            color: #d6d6d6;
+        }
+        .author-slot {
+            border: 1px dashed #ffa500;
+            background: rgba(255, 165, 0, 0.06);
+            padding: 12px 14px;
+            margin: 14px 0;
+            font-size: 0.92em;
+            color: #ffd38a;
+        }
+        .tech-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 18px 0 22px;
+            padding-top: 14px;
+            border-top: 1px solid #2a2a2a;
+        }
+        .chip {
+            font-size: 0.8em;
+            background: #222;
+            border: 1px solid #383838;
+            color: #bdbdbd;
+            padding: 3px 9px;
+            border-radius: 3px;
+        }
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: bold;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid #4caf50;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+        .btn-primary {
+            background-color: #4caf50;
+            color: #111;
+        }
+        .btn-primary:hover {
+            background-color: #45a049;
+        }
+        .btn-secondary {
+            background-color: transparent;
+            color: #4caf50;
+        }
+        .btn-secondary:hover {
+            background-color: rgba(76, 175, 80, 0.14);
+        }
+        .references {
+            margin-top: 48px;
+            padding: 20px;
+            background-color: #1a1a1a;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #b8b8b8;
+        }
+        .references a {
+            color: #4caf50;
+            text-decoration: none;
+        }
+        .references a:hover {
+            text-decoration: underline;
+        }
 
+        /* Inline Preview Modal */
+        #stageModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.92);
+            z-index: 1000;
+            flex-direction: column;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        #stageModal.open {
+            display: flex;
+        }
+        .modal-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+            gap: 12px;
+        }
+        .modal-title {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        .modal-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .modal-btn {
+            background: #222;
+            color: #e0e0e0;
+            border: 1px solid #4caf50;
+            padding: 6px 12px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 0.85em;
+            border-radius: 3px;
+        }
+        .modal-btn:hover {
+            background: #4caf50;
+            color: #111;
+        }
+        #stageFrame {
+            flex: 1;
+            width: 100%;
+            border: 1px solid #333;
+            background: #0b1018;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><a href="index.html">TechnicalSemantics</a></div>
+            <div>RESOURCE PORTAL FOR DESIGN AND INNOVATION</div>
+            <nav>
+                <a href="index.html">INDEX</a>
+                <a href="research.html" class="active">RESEARCH</a>
+                <a href="creations/">CREATIONS</a>
+                <a href="index.html#projects">PROJECTS</a>
+                <a href="index.html#office">OFFICE</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>RESEARCH // PROCESS LOG</h1>
+
+            <div class="preamble">
+                <p>~ Notes on making, before and alongside the playable files stored in <a href="creations/" style="color:#4caf50;">/creations</a>.</p>
+                <p>
+                    A lot of early-2000s browser and sixth-generation console games shaped how motion, friction, camera framing,
+                    and HUD legibility felt—yet many of them sit behind deprecated plugins (Flash/Shockwave) or ageing hardware today.
+                    These prototypes test conversational "vibecoding" as a method of visual-reference reconstruction:
+                    starting from remembered mechanics and screenshots, then iterating directly in single-file HTML and Three.js until the physics feel right.
+                </p>
+            </div>
+
+            <!-- Build Note 01: Free Kick 3D -->
+            <article class="entry" id="freekick">
+                <div class="entry-tag">Build Note 01 // Artifact: creations/freekick3d.html</div>
+                <h2>Free Kick 3D — Rebuilding Set-Piece Muscle Memory</h2>
+
+                <div class="commentary">
+                    <h3>Visual Reference &amp; Lineage</h3>
+                    <div class="author-slot">
+                        [YOUR NOTE: Name the specific earlier free-kick / browser / console games or visual references that sparked this build—camera angle behind the taker, pixel stadium crowd, spin reticle, power bar feel.]
+                    </div>
+
+                    <h3>How It Was Built (Vibecoding &amp; Systems)</h3>
+                    <p>
+                        Built as a single standalone HTML file pairing a deliberately low-resolution WebGL viewport (320&times;240, nearest-neighbour filtered)
+                        with a crisp 3&times; 2D canvas HUD overlay. Rather than importing heavy 3D assets, players, goal netting, and the animated stadium crowd
+                        are generated procedurally in Three.js r128.
+                    </p>
+                    <p>
+                        Under the hood, the iteration moved from simple ball arcs to coupled set-piece mechanics: Magnus spin curves, wind drift,
+                        a wall that may or may not jump, and a goalkeeper whose reaction speed scales with performance. A lightweight neural network
+                        stored in <code>localStorage</code> tracks outcomes across 30 pitch spots (20m, 24m, 28m arcs), paired with a Cross-Entropy Method (CEM)
+                        Coach solver that searches for wall-clearing trajectories on demand.
+                    </p>
+                    <div class="author-slot">
+                        [YOUR NOTE: Add what surprised you or broke during the vibecoding loop—e.g. tuning the wall jump timing, keeper parries, or getting keyboard + PS4 controller + touch pads to coexist.]
+                    </div>
+                </div>
+
+                <div class="tech-strip">
+                    <span class="chip">Three.js r128</span>
+                    <span class="chip">320&times;240 Pixel WebGL + 2D HUD</span>
+                    <span class="chip">Magnus Spin &amp; Wind Physics</span>
+                    <span class="chip">Browser NN + CEM Coach AI</span>
+                    <span class="chip">Keyboard / PS4 Pad / Touch</span>
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-primary" href="creations/freekick3d.html">Open Artifact (Full Screen)</a>
+                    <button class="btn btn-secondary" data-launch="creations/freekick3d.html" data-title="Free Kick 3D">Inspect Inline</button>
+                </div>
+            </article>
+
+            <!-- Build Note 02: Blood-Orange Golf 3D -->
+            <article class="entry" id="golf">
+                <div class="entry-tag">Build Note 02 // Artifact: creations/bloodorangegolf3d.html</div>
+                <h2>Blood-Orange / Outlaw Golf 3D — Transferring the Engine</h2>
+
+                <div class="commentary">
+                    <h3>Visual Reference &amp; Lineage</h3>
+                    <p>
+                        This second build carries the low-res pixel visual language of Free Kick 3D into a wider 16:9 terrain space,
+                        drawing on mid-2000s arcade golf presentation (slanted HUD plates, composure/tempo swing bars, and drivable buggy traversal)
+                        alongside a toggleable synthwave <code>BLOOD DRAGON</code> / <code>CLASSIC</code> palette.
+                    </p>
+                    <div class="author-slot">
+                        [YOUR NOTE: Write about the Outlaw Golf 2 (~2004/2005) and neon/Blood Dragon visual cues you pulled from—what felt absent in modern golf sims and why you wanted the buggy drift &amp; token mulligan loop back.]
+                    </div>
+
+                    <h3>How It Was Built (Vibecoding &amp; Systems)</h3>
+                    <p>
+                        Instead of static heightmaps, a single analytic elevation function <code>HT(x, z)</code> drives the terrain mesh,
+                        ball bounce normals, green-read slope arrows, water bowls, buggy suspension/jumps, and camera ground clearance across 9 deterministic holes.
+                        Zero-allocation typed-array buffers hold trajectory previews and multi-camera replays, while a second WebGL scissor viewport renders
+                        a live picture-in-picture landing camera.
+                    </p>
+                    <p>
+                        Pacing is folded into the control loop: waiting on the green settles the composure ring (slowing the swing meter and earning mulligan tokens),
+                        while rushing speeds the bar up. Between shots, the camera hands over to a drift-physics golf buggy with an optional orb-collecting Adventure Drive.
+                    </p>
+                    <div class="author-slot">
+                        [YOUR NOTE: Describe how transferring the method from Free Kick 3D into Golf changed your prompting/refactoring workflow—e.g. moving to lean state-machine architecture and adding the Blood Dragon theme.]
+                    </div>
+                </div>
+
+                <div class="tech-strip">
+                    <span class="chip">Three.js r128</span>
+                    <span class="chip">Analytic Height Field HT(x,z)</span>
+                    <span class="chip">PiP Landing Camera</span>
+                    <span class="chip">Blood Dragon / Classic Themes</span>
+                    <span class="chip">Drift Buggy + 9 Deterministic Holes</span>
+                </div>
+
+                <div class="actions">
+                    <a class="btn btn-primary" href="creations/bloodorangegolf3d.html">Open Artifact (Full Screen)</a>
+                    <button class="btn btn-secondary" data-launch="creations/bloodorangegolf3d.html" data-title="Outlaw Golf 3D">Inspect Inline</button>
+                </div>
+            </article>
+
+            <section class="references">
+                <h2 style="font-size:22px;margin-top:0;">Context &amp; Technical References</h2>
+                <p>
+                    &bull; <strong>Web Plugin Preservation:</strong> Adobe Flash Player EOL (31 Dec 2020) and community preservation archives such as
+                    <a href="https://flashpointarchive.org/" target="_blank" rel="noopener noreferrer">Flashpoint Archive</a> and the
+                    <a href="https://archive.org/details/softwarelibrary_flash" target="_blank" rel="noopener noreferrer">Internet Archive Software Library</a>.<br>
+                    &bull; <strong>Runtime Stack:</strong> Three.js r128 WebGL renderer, HTML5 Canvas 2D HUD,
+                    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Gamepad_API/Using_the_Gamepad_API" target="_blank" rel="noopener noreferrer">MDN Gamepad API</a>, and
+                    <a href="https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage" target="_blank" rel="noopener noreferrer">Window.localStorage</a>.<br>
+                    &bull; <strong>Hosting Pattern:</strong> Decoupled static single-file artifacts under <code>/creations/</code>, documented separately from execution on
+                    <a href="https://docs.github.com/en/pages" target="_blank" rel="noopener noreferrer">GitHub Pages</a>.
+                </p>
+            </section>
+        </main>
+    </div>
+
+    <div id="stageModal" role="dialog" aria-modal="true" aria-label="Creation Preview">
+        <div class="modal-bar">
+            <span class="modal-title" id="modalTitle">Creation</span>
+            <div class="modal-controls">
+                <a class="modal-btn" id="modalExternal" href="#" target="_blank" rel="noopener noreferrer">Open Full Screen</a>
+                <button class="modal-btn" id="closeStageBtn" type="button">Close [Esc]</button>
+            </div>
+        </div>
+        <iframe id="stageFrame" src="" title="Playable Creation" allow="gamepad; fullscreen"></iframe>
+    </div>
+
+    <script>
+        const modal = document.getElementById('stageModal');
+        const frame = document.getElementById('stageFrame');
+        const titleEl = document.getElementById('modalTitle');
+        const extLink = document.getElementById('modalExternal');
+        const closeBtn = document.getElementById('closeStageBtn');
+
+        function openStage(url, title) {
+            titleEl.textContent = title;
+            extLink.href = url;
+            frame.src = url;
+            modal.classList.add('open');
+            frame.onload = () => frame.focus();
+        }
+
+        function closeStage() {
+            modal.classList.remove('open');
+            frame.src = '';
+        }
+
+        document.querySelectorAll('[data-launch]').forEach(btn => {
+            btn.addEventListener('click', () => openStage(btn.dataset.launch, btn.dataset.title));
+        });
+
+        closeBtn.addEventListener('click', closeStage);
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape' && modal.classList.contains('open')) closeStage();
+        });
+    </script>
+</body>
+</html>
