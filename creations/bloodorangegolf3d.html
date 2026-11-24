@@ -31,7 +31,9 @@ body.bd #fire{background:#7a2bd9}
 #app{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"l cv r" "l bar r";align-items:center;justify-items:center;height:100%;gap:6px 10px}
 #pads{display:contents}#l{grid-area:l}#rp{grid-area:r;flex-direction:column}
 #cvw{grid-area:cv;width:min(100%,calc((100vh - 64px)*16/9))}#bar{grid-area:bar;width:100%}#hsub{display:none}}
-</style></head><body class="bd">
+</style></head><a id="backToSite" href="../research.html" style="position:fixed;top:8px;left:8px;z-index:999;background:rgba(17,17,17,.85);color:#4caf50;border:1px solid #4caf50;padding:4px 10px;border-radius:4px;font:bold 12px Arial,sans-serif;text-decoration:none;">&larr; RESEARCH</a>
+<script>if (window.self !== window.top) document.getElementById('backToSite').style.display = 'none';</script>
+<body class="bd">
 <div id="app">
 <div id="cvw" class="bd"><canvas id="c3" width="427" height="240"></canvas><canvas id="c" class="bd" width="1281" height="720" tabindex="0"></canvas></div>
 <div id="bar"><div id="ab"><button id="b_c">COACH</button><button id="b_v">VIEW</button><button id="b_r">REPLAY</button><button id="b_t">MULLIGAN</button><button id="b_h">DRIFT</button><button id="b_a">ADVENTURE</button><button id="b_b">THEME</button><button id="b_m">HOLES</button></div><p id="hint"><b id="hmain"></b> <span id="hsub"></span></p></div>
