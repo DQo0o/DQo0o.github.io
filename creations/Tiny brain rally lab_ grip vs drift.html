@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tiny brain rally lab: grip vs drift</title>
+<style>
+:root{--bg:#0b0a09;--ink:#e8dcc8;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:ui-monospace,Menlo,Consolas,monospace}
+main{max-width:1200px;margin:0 auto;padding:16px}
+h1{font-size:17px;margin:4px 0 2px;color:#f2b84b}h2{font-size:14px;margin:0 0 6px}
+p.sub{margin:0 0 10px;font-size:12px;opacity:.7}
+.panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px}
+.panel{border:1px solid #2b2418;border-radius:12px;padding:12px;background:#0e0c0a;min-width:0}
+canvas{background:#0f0d0b;border:1px solid #2b2418;border-radius:10px;max-width:100%;height:auto}
+.cv{width:100%}.r2{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px}
+pre{flex:1 1 180px;margin:0;font-size:11px;line-height:1.5;opacity:.85;overflow-x:auto}
+.st{font-size:12px;margin-bottom:6px;min-height:34px}.btns,.bar{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+button{background:#17130e;color:var(--ink);border:1px solid #3a2f1c;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}
+button.on{border-color:#f2b84b;color:#f2b84b}
+textarea{width:100%;height:110px;background:#0f0d0b;color:var(--ink);border:1px solid #2b2418;border-radius:8px;font:11px ui-monospace,monospace;box-sizing:border-box;margin-top:12px}
+</style></head><body><main>
+<h1>Tiny brain rally</h1>
+<p class="sub">Two cars, two brains, one track, training in parallel. The grip car is AWD on street tyres; the drift car is RWD on slicks, so throttle breaks the rear loose. Two stages, each mixing fast asphalt, loose gravel and rough ground in different proportions; white ticks on the road mark surface changes, and the brains sense the grip underfoot and ahead. Both cars have a footbrake they must learn to use; the drift car also has a handbrake. Each car works in two phases: it explores until it completes a lap, then locks a protocol (printed as a formula) and optimises lap time with faster tests: cars behind the record pace are cut early. Logs, records and lap telemetry export as files.</p>
+<div class="bar"><button data-s="1" class="on">×1</button><button data-s="10">×10</button><button data-s="50">×50</button><button data-s="300">MAX</button><button id="reset">Reset both</button></div>
+<div class="bar" id="surf"></div>
+<div class="panels" id="panels"></div>
+<textarea id="box" placeholder="Log / preset output appears here. Paste a preset JSON and press Load box."></textarea>
+<script>
+const W=1150,H=736,NI=9,NH=6,POP=40,RA=[-1,-.5,0,.5,1],RL=160,HALF=34;
+const TRACKS={
+ coast:{key:'coast',name:'Coast road',cps:[[160,192],[416,112],[720,128],[976,224],[1040,400],[896,528],[752,416],[608,496],[672,640],[480,672],[256,624],[128,448]],seg:[['asphalt',.3],['gravel',.15],['asphalt',.25],['rough',.2],['gravel',.1]]},
+ forest:{key:'forest',name:'Forest stage',cps:[[140,140],[330,80],[520,170],[700,90],[930,130],[1060,280],[960,400],[1040,540],[880,650],[690,570],[560,680],[360,640],[200,700],[100,500],[230,380],[120,270]],seg:[['asphalt',.1],['gravel',.25],['rough',.25],['gravel',.15],['asphalt',.1],['rough',.15]]}};
+const pct=tr=>{const o={};tr.seg.forEach(([k,f])=>o[k]=(o[k]||0)+f);return Object.entries(o).map(([k,f])=>Math.round(f*100)+'% '+k).join(' · ')};
+let TR,pts,N,mask,surfAt,a0;
+const mk=()=>{const c=document.createElement('canvas');c.width=W;c.height=H;return c};
+function path(c){c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();}
+function buildTrack(k){TR=TRACKS[k];const cp=TR.cps,n=cp.length,spp=Math.round(440/n);pts=[];
+ for(let i=0;i<n;i++){const p0=cp[(i+n-1)%n],p1=cp[i],p2=cp[(i+1)%n],p3=cp[(i+2)%n];
+  for(let q=0;q<spp;q++){const t=q/spp,t2=t*t,t3=t2*t;pts.push([0,1].map(d=>.5*((2*p1[d])+(-p0[d]+p2[d])*t+(2*p0[d]-5*p1[d]+4*p2[d]-p3[d])*t2+(-p0[d]+3*p1[d]-3*p2[d]+p3[d])*t3)));}}
+ N=pts.length;surfAt=new Array(N);TR.starts=[];let cum=0;
+ TR.seg.forEach(([k2,f],si)=>{const s0=Math.round(cum*N);cum+=f;const e=si===TR.seg.length-1?N:Math.round(cum*N);TR.starts.push(s0);for(let i=s0;i<e;i++)surfAt[i]=k2;});
+ const mc=mk(),mx=mc.getContext('2d');mx.lineJoin='round';mx.lineWidth=HALF*2;mx.strokeStyle='#fff';path(mx);mx.stroke();mask=mx.getImageData(0,0,W,H).data;
+ a0=Math.atan2(pts[3][1]-pts[0][1],pts[3][0]-pts[0][0]);}
+const inside=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&mask[((y|0)*W+(x|0))*4+3]>128;
+function art(col){const c=mk(),t=c.getContext('2d');t.lineJoin='round';t.strokeStyle=col;t.shadowColor=col;t.shadowBlur=18;t.lineWidth=HALF*2+4;path(t);t.stroke();
+ t.shadowBlur=0;t.strokeStyle='#14110d';t.lineWidth=HALF*2;path(t);t.stroke();
+ for(const k of Object.keys(SURF)){const S=SURF[k],g=document.createElement('canvas');g.width=W;g.height=H;const u=g.getContext('2d');
+  u.strokeStyle='#fff';u.lineWidth=HALF*2;let any=0;
+  for(let i=0;i<N;i++)if(surfAt[i]===k){any=1;u.beginPath();u.moveTo(pts[i][0],pts[i][1]);const q=pts[(i+1)%N];u.lineTo(q[0],q[1]);u.stroke();}
+  if(!any)continue;
+  u.globalCompositeOperation='source-in';u.fillStyle=S.road;u.fillRect(0,0,W,H);u.globalCompositeOperation='source-atop';
+  if(k!=='asphalt'){const gr=k==='gravel';let sd=7;const r=()=>(sd=(sd*16807)%2147483647)/2147483647;
+   for(let i=0;i<(gr?6000:3200);i++){u.fillStyle=gr?(r()<.5?'#4a3d2a':'#171209'):(r()<.5?'#2f3a20':'#10150a');const z=gr?1+r()*2.5:2+r()*8;u.fillRect(r()*W,r()*H,z,z);}}
+  t.drawImage(g,0,0);}
+ t.strokeStyle='rgba(255,255,255,.75)';t.lineWidth=3;
+ TR.starts.forEach(i=>{const p=pts[i],q=pts[(i+1)%N],b=pts[(i+N-1)%N],tx=q[0]-b[0],ty=q[1]-b[1],l=Math.hypot(tx,ty)||1,nx=-ty/l,ny=tx/l;t.beginPath();t.moveTo(p[0]+nx*(HALF+2),p[1]+ny*(HALF+2));t.lineTo(p[0]-nx*(HALF+2),p[1]-ny*(HALF+2));t.stroke();});
+ t.strokeStyle='rgba(180,200,230,.5)';t.lineWidth=2;t.setLineDash([12,14]);path(t);t.stroke();return c}
+const TYPES=[
+ {key:'grip',name:'GRIP · AWD · street tyres',col:'#f2b84b',nOut:3,acc:.17,grip:.55,rwd:0,slick:0,bonus:0,outs:['STEER','GAS','BRAKE']},
+ {key:'drift',name:'DRIFT · RWD · slick tyres',col:'#5ee0ff',nOut:4,acc:.2,grip:.42,rwd:1,slick:1,bonus:1,outs:['STEER','GAS','BRAKE','HBRAKE']}];
+const SURF={
+ asphalt:{key:'asphalt',name:'Fast asphalt',road:'#1b1f26',acc:1.15,drag:.968,grip:1,slick:1.15,brk:1,rough:0,dust:'rgba(255,255,255,.16)'},
+ gravel:{key:'gravel',name:'Loose gravel',road:'#2b2318',acc:.85,drag:.964,grip:.6,slick:.8,brk:.55,rough:.3,dust:'rgba(225,185,120,.2)'},
+ rough:{key:'rough',name:'Rough ground',road:'#1d2415',acc:.7,drag:.96,grip:.75,slick:.85,brk:.65,rough:1,dust:'rgba(150,200,120,.18)'}};
+const nz=(x,y)=>Math.sin(x*.21+y*.13)*Math.cos(y*.19-x*.07);
+buildTrack('coast');
+const nW=T=>NI*NH+NH+NH*T.nOut+T.nOut,randn=()=>Math.sqrt(-2*Math.log(Math.random()+1e-9))*Math.cos(6.2832*Math.random());
+const IN=['rL','rl','rC','rr','rR','spd','slip','gHere','gNext'];
+function formula(w,T,hdr){const no=T.nOut,b=NI*NH+NH,sg=v=>(v<0?'−':'+')+Math.abs(v).toFixed(2),L=[hdr,'terms with |w|<0.15 hidden here; full weights are in the preset JSON'];
+ for(let j=0;j<NH;j++)L.push('h'+(j+1)+' = tanh('+IN.map((n,i)=>[w[j*NI+i],n]).filter(a=>Math.abs(a[0])>=.15).map(a=>sg(a[0])+'·'+a[1]).join(' ')+' '+sg(w[NI*NH+j])+')');
+ const nm=['steer = tanh','throttle = (1+tanh','brake = max(0,tanh','handbrake = max(0,tanh'],cl=['',')/2',')',')'];
+ for(let o=0;o<no;o++){const t=Array.from({length:NH},(_,i)=>[w[b+o*NH+i],'h'+(i+1)]).filter(a=>Math.abs(a[0])>=.15).map(a=>sg(a[0])+'·'+a[1]).join(' ');L.push(nm[o]+'('+t+' '+sg(w[b+NH*no+o])+')'+cl[o]+(o>1?')':''));}
+ return L.join('\n');}
+function summary(tr){const g={};tr.forEach(r=>{const k=surfAt[r[9]]||r[9],a=g[k]=g[k]||{n:0,v:0,th:0,bk:0,sl:0,st:0};a.n++;a.v+=r[3];a.th+=r[5]>.8;a.bk+=r[6]>.3;a.sl=Math.max(a.sl,Math.abs(r[4]));a.st+=Math.abs(r[8]);});
+ return Object.entries(g).map(([k,a])=>k+': mean speed '+(a.v/a.n).toFixed(1)+' · full throttle '+Math.round(100*a.th/a.n)+'% · braking '+Math.round(100*a.bk/a.n)+'% · peak slip '+Math.round(a.sl)+'° · steer activity '+(a.st/a.n).toFixed(2)).join('\n');}
+const csv=(h,rows)=>h+'\n'+rows.map(r=>r.join(',')).join('\n');
+const dlP=(window.claude&&claude.use)?claude.use('downloads').catch(()=>null):Promise.resolve(null);
+function out(name,text){box.value=text;box.select();dlP.then(d=>d&&d.save({filename:name,data:text}).catch(()=>{}));}
+const fmt=t=>(t/60).toFixed(2)+'s',box=document.getElementById('box');
+function forward(w,inp,no){const h=[],o=[],b=NI*NH+NH;
+ for(let j=0;j<NH;j++){let s=w[NI*NH+j];for(let i=0;i<NI;i++)s+=inp[i]*w[j*NI+i];h.push(Math.tanh(s));}
+ for(let j=0;j<no;j++){let s=w[b+NH*no+j];for(let i=0;i<NH;i++)s+=h[i]*w[b+j*NH+i];o.push(Math.tanh(s));}
+ return{inp,h,o};}
+const mkCar=(w,T)=>({w,T,x:pts[0][0],y:pts[0][1],px:0,py:0,a:a0,vx:Math.cos(a0),vy:Math.sin(a0),vs:0,vf:1,dr:0,t:0,bkT:0,tr:[],pg:[],alive:true,fin:0,lap:0,idx:0,prog:0,best:0,stall:0,act:null,rays:[]});
+const fit=c=>(c.fin?N+Math.max(0,4000-c.lap)*.2:c.best)+c.dr;
+function sense(c){const inp=[];c.rays=[];
+ for(const r of RA){const an=c.a+r*.9,dx=Math.cos(an),dy=Math.sin(an);let d=0;while(d<RL&&inside(c.x+dx*d,c.y+dy*d))d+=4;inp.push(d/RL);c.rays.push([c.x+dx*d,c.y+dy*d]);}
+ inp.push(Math.hypot(c.vx,c.vy)/6);inp.push(Math.max(-1,Math.min(1,c.vs/3)));const gI=k=>SURF[surfAt[k%N]].grip;inp.push(gI(c.idx));inp.push(gI(c.idx+40));return inp;}
+function step(c,L){if(!c.alive)return;const T=c.T;c.t++;
+ const S=SURF[surfAt[c.idx]];c.act=forward(c.w,sense(c),T.nOut);const o=c.act.o,g=(o[1]+1)/2,bk=Math.max(0,o[2]),hb=T.nOut>3?Math.max(0,o[3]):0;if(bk>.3)c.bkT++;
+ const fx=Math.cos(c.a),fy=Math.sin(c.a),sx=-fy,sy=fx;
+ let vf=c.vx*fx+c.vy*fy,vs=c.vx*sx+c.vy*sy;
+ vf=(vf+g*T.acc*S.acc)*(S.drag-hb*.015);if(vf>0)vf*=1-bk*.07*S.brk;
+ const gk=S.grip*(T.slick?S.slick:1);let ret=1-(1-T.grip)*gk+hb*.42;if(T.rwd)ret+=.45*g*Math.min(1,Math.max(0,vf)/3);ret=Math.min(.97,ret);vs*=ret;
+ if(S.rough){vs+=nz(c.x,c.y)*S.rough*.12;c.a+=nz(c.y,c.x)*S.rough*.012;}
+ c.vx=fx*vf+sx*vs;c.vy=fy*vf+sy*vs;c.vf=vf;c.vs=vs;
+ c.a+=o[0]*(.065+hb*.03)*Math.min(1,Math.abs(vf)/1.5);
+ c.px=c.x;c.py=c.y;c.x+=c.vx;c.y+=c.vy;
+ if(Math.abs(vs)>1&&vf>1.2&&T.bonus)c.dr+=.04*Math.min(Math.abs(vs),3);
+ if(c.t%3==0)c.tr.push([c.t,c.x,c.y,Math.hypot(c.vx,c.vy),Math.atan2(vs,Math.max(.01,vf))*57.3,g,bk,hb,o[0],surfAt[c.idx]]);
+ if(Math.abs(vs)>.9){L.sk.strokeStyle=S.dust;L.sk.beginPath();L.sk.moveTo(c.px,c.py);L.sk.lineTo(c.x,c.y);L.sk.stroke();}
+ if(!inside(c.x,c.y)){c.alive=false;return;}
+ let bj=c.idx,bd=1e9;
+ for(let d=-10;d<=10;d++){const j=(c.idx+d+N)%N,dx=pts[j][0]-c.x,dy=pts[j][1]-c.y,q=dx*dx+dy*dy;if(q<bd){bd=q;bj=j;}}
+ let dl=bj-c.idx;if(dl>N/2)dl-=N;if(dl<-N/2)dl+=N;c.prog+=dl;c.idx=bj;
+ c.pg.push(c.prog);
+ if(c.prog>=N){c.fin=1;c.lap=c.t;c.alive=false;return;}
+ if(c.prog>c.best+.5){c.best=c.prog;c.stall=0}else if(++c.stall>100)c.alive=false;}
+function makeLab(T,host){
+ const L={T,art:art(T.col),rh:[],rec:null,lineCv:null,pace:null,sig:.08,gated:0,t0:performance.now(),showLine:true,ftext:'',gen:1,champ:null,champFit:0,ticks:0,leader:null,att:POP,log:[],bestLap:null,lastImp:0,state:'LEARNING',mode:'train',preset:null,cars:[],msg:'',skf:0};
+ host.className='panel';host.innerHTML=`<h2 style="color:${T.col}">${T.name}</h2><div class="st"></div><canvas class="cv" width="${W}" height="${H}"></canvas><div class="r2"><canvas class="nv" width="300" height="300"></canvas><div style="flex:1 1 220px;min-width:0"><canvas class="lc" width="420" height="110" style="width:100%"></canvas><pre class="lg"></pre></div></div><pre class="fm" style="max-height:200px;overflow:auto;margin-top:8px;font-size:11px;line-height:1.5;white-space:pre-wrap">Formula prints here once the car completes a lap.</pre><div class="btns"><button class="b1">Gen log ⬇</button><button class="b5">Records ⬇</button><button class="b6">Lap telemetry ⬇</button><button class="b7">Formula ⬇</button><button class="b2">Preset ⬇</button><button class="b3">Race preset</button><button class="b4">Load box</button><button class="b8 on">Racing line</button></div>`;
+ const q=s=>host.querySelector(s),cx=q('.cv').getContext('2d'),nx=q('.nv').getContext('2d'),st=q('.st'),lg=q('.lg'),fm=q('.fm'),lcx=q('.lc').getContext('2d');
+ const sc=mk();L.sk=sc.getContext('2d');L.sk.lineWidth=2;L.sk.strokeStyle='rgba(255,255,255,.16)';
+ const key=()=>'tbg3-'+TR.key+'-'+T.key;
+ const recs=()=>Object.keys(TRACKS).map(k=>{try{const p=JSON.parse(localStorage.getItem('tbg3-'+k+'-'+T.key)||'null');return k.slice(0,4)+' '+(p?p.lapSeconds:'-')}catch(e){return k.slice(0,4)+' -'}}).join(' · ');
+ const loadP=()=>{try{const p=JSON.parse(localStorage.getItem(key())||'null');if(p&&p.weights&&p.weights.length===nW(T)){L.preset=p;L.champ=p.weights.slice();L.bestLap=p.lapTicks;L.champFit=1e6;L.state='RESTORED PRESET';L.ftext=(p.formula||'')+'\n\n'+(p.summary||'');L.rh=p.history||[];}}catch(e){}};
+ function breed(par){const sg=L.bestLap?L.sig:.3,pm=L.bestLap?.25:.15,nw=[];if(L.champ)nw.push(L.champ.slice());par.slice(0,3).forEach(w=>nw.push(w.slice()));
+  while(nw.length<POP){const p=par.length?par[Math.floor(Math.random()*Math.min(10,par.length))]:null;
+   nw.push(p?p.map(v=>Math.random()<pm?v+randn()*sg:v):Array.from({length:nW(T)},()=>randn()*.8));}
+  L.cars=nw.map(w=>mkCar(w,T));L.ticks=0;}
+ L.init=()=>{L.gen=1;L.att=POP;L.log=[];L.mode='train';L.leader=null;L.msg='';L.lastImp=0;L.champ=null;L.champFit=0;L.bestLap=null;L.preset=null;L.state='EXPLORING';L.rh=[];L.rec=null;L.lineCv=null;L.pace=null;L.sig=.08;L.gated=0;L.ftext='';L.t0=performance.now();loadP();L.recs=recs();breed(L.champ?[L.champ]:[]);};
+ L.setTrack=()=>{L.art=art(T.col);L.sk.clearRect(0,0,W,H);L.init();};
+ function evolve(){const s=L.cars.slice().sort((a,b)=>fit(b)-fit(a)),fins=s.filter(c=>c.fin),gb=fins.length?Math.min(...fins.map(c=>c.lap)):null;
+  if(gb!==null&&(L.bestLap===null||gb<L.bestLap)){const big=L.bestLap===null||gb<L.bestLap*.995;const w=fins.find(c=>c.lap===gb).w.slice();
+   const first=L.bestLap===null,rc=fins.find(c=>c.lap===gb);L.bestLap=gb;if(big)L.lastImp=L.gen;L.sig=Math.min(.2,L.sig*1.25);L.pace=rc.pg;L.rec=rc.tr;
+   L.formulaTxt=formula(w,T,T.name+' on '+TR.name+' — lap '+fmt(gb)+' (gen '+L.gen+', attempt #'+(L.att)+')');L.sumTxt=summary(rc.tr);L.ftext=L.formulaTxt+'\n\nLap behaviour (from telemetry):\n'+L.sumTxt;
+   L.rh.push({attempt:L.att,gen:L.gen,wallS:+((performance.now()-L.t0)/1000).toFixed(1),lapS:+(gb/60).toFixed(2),first:first?1:0});
+   L.lineCv=mk();{const u=L.lineCv.getContext('2d');u.lineWidth=4;u.lineCap='round';for(let k=1;k<L.rec.length;k++){const a=L.rec[k-1],b=L.rec[k];u.strokeStyle=b[6]>.3?'#ff5a4d':b[5]>.8?'#6bd66b':'#ffd36b';u.beginPath();u.moveTo(a[1],a[2]);u.lineTo(b[1],b[2]);u.stroke();}}
+   if(first)L.msg='Protocol locked at gen '+L.gen+': optimising lap time';
+   L.preset={key:T.key,track:TR.key,segments:TR.seg,car:T.name,drivetrain:T.rwd?'RWD':'AWD',tyres:T.rwd?'slick':'street',lapTicks:gb,lapSeconds:+(gb/60).toFixed(2),gen:L.gen,params:{NI,NH,nOut:T.nOut,POP},weights:w,formula:L.formulaTxt,summary:L.sumTxt,history:L.rh};
+   try{localStorage.setItem(key(),JSON.stringify(L.preset))}catch(e){}L.recs=recs();
+   L.champ=w;L.champFit=1e6;}
+  else if(gb!==null)L.sig=Math.max(.01,L.sig*.85);
+  if(L.bestLap!==null)L.state=L.gen-L.lastImp>=12?'CONVERGED · '+fmt(L.bestLap):'OPTIMISING · '+fmt(L.bestLap);
+  L.log.push({gen:L.gen,bestPct:+(Math.max(...L.cars.map(c=>c.best))/N*100).toFixed(1),meanFit:+(L.cars.reduce((a,c)=>a+fit(c),0)/POP).toFixed(1),finishers:fins.length,genBestLap:gb===null?'':+(gb/60).toFixed(2),recordLap:L.bestLap===null?'':+(L.bestLap/60).toFixed(2),brakeUsePct:+(100*s[0].bkT/Math.max(1,s[0].t)).toFixed(0),phase:L.bestLap===null?'explore':'optimise',sigma:+L.sig.toFixed(3),gated:L.gated,meanFinLapS:fins.length?+(fins.reduce((a,c)=>a+c.lap,0)/fins.length/60).toFixed(2):'',wallS:+((performance.now()-L.t0)/1000).toFixed(1),testsPerS:+(L.att/Math.max(1,(performance.now()-L.t0)/1000)).toFixed(1)});L.gated=0;
+  if(fit(s[0])>L.champFit&&!L.bestLap){L.champ=s[0].w.slice();L.champFit=fit(s[0]);}
+  L.gen++;L.att+=POP;breed(s.map(c=>c.w));}
+ L.tick=()=>{L.cars.forEach(c=>step(c,L));L.ticks++;
+  if(L.mode==='train'&&L.bestLap){const pc=L.pace;L.cars.forEach(c=>{if(!c.alive)return;if(L.ticks>=L.bestLap||(pc&&L.ticks>40&&c.prog<pc[Math.min(L.ticks,pc.length-1)]-.06*N)){c.alive=false;L.gated++;}});}
+ const al=L.cars.filter(c=>c.alive);
+  if(al.length)L.leader=al.reduce((a,b)=>fit(b)>fit(a)?b:a);
+  if(!al.length||L.ticks>6000){if(L.mode==='race'){const c=L.cars[0];L.msg=c.fin?'Race: '+fmt(c.lap):'Race: crashed at '+(c.best/N*100|0)+'%';L.mode='train';breed(L.champ?[L.champ]:[]);}else evolve();}};
+ L.race=w=>{L.mode='race';L.cars=[mkCar(w,T)];L.ticks=0;L.msg='Racing preset…'};
+ const tag=()=>TR.key+'-'+T.key;
+ q('.b1').onclick=()=>out('gen-log-'+tag()+'.csv','# '+TR.name+' / '+T.name+'\n'+csv('gen,bestPct,meanFit,finishers,genBestLapS,recordLapS,brakeUsePct,phase,sigma,gated,meanFinLapS,wallS,testsPerS',L.log.map(r=>Object.values(r))));
+ q('.b5').onclick=()=>out('records-'+tag()+'.csv',csv('attempt,gen,wallS,lapS,firstLap',L.rh.map(r=>Object.values(r))));
+ q('.b6').onclick=()=>out('lap-telemetry-'+tag()+'.csv',L.rec?csv('tick,x,y,speed,slipDeg,throttle,brake,handbrake,steer,surface',L.rec.map(r=>r.slice(0,9).concat(r[9]))):'No lap yet.');
+ q('.b7').onclick=()=>out('formula-'+tag()+'.txt',L.ftext||'No lap yet.');
+ q('.b2').onclick=()=>out('preset-'+tag()+'.json',L.preset?JSON.stringify(L.preset):'No preset yet: needs a completed lap.');
+ q('.b8').onclick=e=>{L.showLine=!L.showLine;e.target.classList.toggle('on',L.showLine);};
+ q('.b3').onclick=()=>{if(L.preset)L.race(L.preset.weights);};
+ q('.b4').onclick=()=>{try{const p=JSON.parse(box.value);if(p.key!==T.key||p.track!==TR.key||p.weights.length!==nW(T))throw 0;L.preset=p;L.champ=p.weights.slice();L.bestLap=p.lapTicks||null;L.champFit=1e6;L.race(p.weights);}catch(e){L.msg='Box has no valid '+T.key+' preset for '+TR.name;}};
+ L.draw=()=>{cx.clearRect(0,0,W,H);cx.drawImage(L.art,0,0);
+  if(++L.skf%8==0){L.sk.globalCompositeOperation='destination-out';L.sk.fillStyle='rgba(0,0,0,.06)';L.sk.fillRect(0,0,W,H);L.sk.globalCompositeOperation='source-over';}
+  cx.drawImage(sc,0,0);if(L.showLine&&L.lineCv){cx.globalAlpha=.7;cx.drawImage(L.lineCv,0,0);cx.globalAlpha=1;}const ld=L.leader;
+  const dc=(c,col,al)=>{cx.save();cx.translate(c.x,c.y);cx.rotate(c.a);cx.globalAlpha=al;cx.fillStyle=col;cx.fillRect(-9,-5,18,10);cx.restore();};
+  L.cars.forEach(c=>{if(c.alive&&c!==ld)dc(c,T.col,.28)});
+  if(ld&&ld.alive){cx.strokeStyle='rgba(255,255,255,.55)';cx.lineWidth=1;ld.rays.forEach(r=>{cx.beginPath();cx.moveTo(ld.x,ld.y);cx.lineTo(r[0],r[1]);cx.stroke();});dc(ld,'#fff',1);}
+  cx.fillStyle='#e8dcc8';cx.font='13px ui-monospace,monospace';cx.fillText((L.mode==='race'?'PRESET RACE · ':'ATTEMPT #'+L.att.toLocaleString()+' · ')+(L.ticks/60).toFixed(1)+'s',14,H-14);
+  const sl=ld?Math.round(Math.abs(Math.atan2(ld.vs,Math.max(.01,ld.vf)))*57.3):0;
+  st.innerHTML=`<b style="color:${T.col}">${L.state}</b> · ${TR.name} · ${ld?SURF[surfAt[ld.idx]].name:''} · GEN ${L.gen} · ALIVE ${L.cars.filter(c=>c.alive).length} · BEST ${(Math.max(0,...L.cars.map(c=>c.best))/N*100|0)}% · SLIP ${sl}° · BRK ${ld&&ld.act?Math.round(Math.max(0,ld.act.o[2])*100):0}%<br>${L.msg}`;
+  lg.textContent='records: '+L.recs+'\ntests/s '+(L.att/Math.max(1,(performance.now()-L.t0)/1000)).toFixed(0)+(L.bestLap?' · σ '+L.sig.toFixed(3):'')+'\n'+(L.log.slice(-5).map(r=>`g${r.gen} ${r.bestPct}% fin ${r.finishers} lap ${r.recordLap||'-'}`).join('\n')||'log fills as generations end');
+  fm.textContent!==L.ftext&&L.ftext&&(fm.textContent=L.ftext);
+  const cw=420,ch=110;lcx.clearRect(0,0,cw,ch);lcx.fillStyle='#e8dcc8';lcx.font='11px ui-monospace,monospace';
+  if(L.rh.length){const mn=Math.min(...L.rh.map(r=>r.lapS)),mx2=Math.max(...L.rh.map(r=>r.lapS)),ax=Math.max(...L.rh.map(r=>r.attempt)),X=a=>10+a/ax*(cw-20),Y=v=>mx2===mn?55:20+(v-mn)/(mx2-mn)*(ch-40);
+   lcx.strokeStyle=T.col;lcx.lineWidth=2;lcx.beginPath();L.rh.forEach((r,i)=>{const x=X(r.attempt),y=Y(r.lapS);if(i){lcx.lineTo(x,Y(L.rh[i-1].lapS));lcx.lineTo(x,y);}else lcx.moveTo(x,y);});lcx.lineTo(cw-10,Y(L.rh[L.rh.length-1].lapS));lcx.stroke();
+   lcx.fillText('record lap '+L.rh[L.rh.length-1].lapS+'s · first '+L.rh[0].lapS+'s · '+L.rh.length+' records',10,12);lcx.fillText('attempts →',cw-80,ch-4);}
+  else lcx.fillText('record lap vs attempts: waiting for first lap',10,16);
+  net(ld);};
+ function net(ld){nx.clearRect(0,0,300,300);const no=T.nOut,X=[40,140,230],ys=(n,a,b)=>Array.from({length:n},(_,i)=>a+i*((b-a)/(n-1))),
+  Y=[ys(NI,30,270),ys(NH,30,270),no===3?[70,150,230]:[50,115,185,250]],A=ld&&ld.act?[ld.act.inp,ld.act.h,ld.act.o]:[null,null,null],w=ld?ld.w:L.champ,Ln=[NI,NH,no];
+  const ed=(x1,y1,x2,y2,v)=>{nx.beginPath();nx.moveTo(x1,y1);nx.lineTo(x2,y2);nx.strokeStyle=v>0?`rgba(106,168,255,${Math.min(.9,Math.abs(v)*.45)})`:`rgba(242,184,75,${Math.min(.9,Math.abs(v)*.45)})`;nx.lineWidth=Math.min(2.5,.4+Math.abs(v)*.8);nx.stroke();};
+  if(w){const b=NI*NH+NH;for(let j=0;j<NH;j++)for(let i=0;i<NI;i++)ed(X[0],Y[0][i],X[1],Y[1][j],w[j*NI+i]);for(let j=0;j<no;j++)for(let i=0;i<NH;i++)ed(X[1],Y[1][i],X[2],Y[2][j],w[b+j*NH+i]);}
+  for(let l=0;l<3;l++)for(let i=0;i<Ln[l];i++){const v=A[l]?A[l][i]:0;nx.beginPath();nx.arc(X[l],Y[l][i],8,0,6.283);
+   nx.fillStyle=l===0?`rgba(242,184,75,${.2+Math.min(1,Math.abs(v))*.8})`:v>=0?`rgba(106,168,255,${.25+v*.75})`:`rgba(242,184,75,${.25-v*.75})`;nx.fill();nx.strokeStyle=T.col;nx.lineWidth=1;nx.stroke();}
+  nx.fillStyle='#e8dcc8';nx.font='10px ui-monospace,monospace';T.outs.forEach((s,i)=>nx.fillText(s,X[2]+13,Y[2][i]+3));
+  ['L','','C','','R','spd','slip','here','next'].forEach((s,i)=>nx.fillText(s,4,Y[0][i]+3));}
+ L.init();return L;}
+const labs=TYPES.map(T=>{const d=document.createElement('div');document.getElementById('panels').appendChild(d);return makeLab(T,d);});
+let speed=1;
+(function frame(){const t0=performance.now();for(let i=0;i<speed;i++){labs.forEach(l=>l.tick());if((i&3)==3&&performance.now()-t0>30)break;}labs.forEach(l=>l.draw());requestAnimationFrame(frame);})();
+document.querySelectorAll('button[data-s]').forEach(b=>b.onclick=()=>{speed=+b.dataset.s;document.querySelectorAll('button[data-s]').forEach(x=>x.classList.toggle('on',x===b));});
+const sb=document.getElementById('surf');
+Object.keys(TRACKS).forEach((k,i)=>{const b=document.createElement('button');b.textContent=TRACKS[k].name+' — '+pct(TRACKS[k]);b.className=i?'':'on';b.onclick=()=>{sb.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));buildTrack(k);labs.forEach(l=>l.setTrack());};sb.appendChild(b);});
+document.getElementById('reset').onclick=()=>{labs.forEach(l=>{l.preset=null;l.msg='';try{localStorage.removeItem('tbg3-'+TR.key+'-'+l.T.key)}catch(e){}l.init();});};
+</script></main></body></html>
