@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creations // TechnicalSemantics</title>
+    <style>
+        body, html { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #111; color: #e0e0e0; line-height: 1.6; }
+        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+        header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; padding: 20px 0; border-bottom: 1px solid #333; }
+        .logo a { font-size: 24px; font-weight: bold; color: #4caf50; text-decoration: none; }
+        nav a { color: #e0e0e0; text-decoration: none; margin-left: 20px; }
+        nav a:hover, nav a.active { color: #4caf50; }
+        h1 { font-weight: normal; color: #4caf50; font-size: clamp(32px, 5vw, 52px); margin: 36px 0 24px; }
+        .shelf { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+        .item { background: #181818; border: 1px solid #333; border-radius: 5px; padding: 22px; display: flex; flex-direction: column; gap: 12px; }
+        .item:hover { border-color: #4caf50; }
+        .item h2 { margin: 0; font-weight: normal; color: #4caf50; }
+        .item p { margin: 0; color: #c4c4c4; font-size: 0.94em; }
+        .links { display: flex; gap: 12px; margin-top: auto; padding-top: 8px; }
+        .play { background: #4caf50; color: #111; padding: 8px 14px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 0.9em; }
+        .notes { color: #ffa500; padding: 8px 0; text-decoration: none; font-size: 0.9em; }
+        .notes:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><a href="../index.html">TechnicalSemantics</a></div>
+            <nav>
+                <a href="../index.html">INDEX</a>
+                <a href="../research.html">RESEARCH</a>
+                <a href="./" class="active">CREATIONS</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>CREATIONS</h1>
+            <div class="shelf">
+                <div class="item">
+                    <h2>Free Kick 3D</h2>
+                    <p>Single-file Three.js set-piece simulation with Magnus spin, wind, adaptive keeper, and localStorage Coach AI.</p>
+                    <div class="links">
+                        <a class="play" href="freekick3d.html">Play</a>
+                        <a class="notes" href="../research.html#freekick">Read build notes &rarr;</a>
+                    </div>
+                </div>
+                <div class="item">
+                    <h2>Blood-Orange / Outlaw Golf 3D</h2>
+                    <p>Single-file Three.js 9-hole terrain golf sim with Blood Dragon &amp; Classic themes, PiP landing cam, and drift buggy.</p>
+                    <div class="links">
+                        <a class="play" href="bloodorangegolf3d.html">Play</a>
+                        <a class="notes" href="../research.html#golf">Read build notes &rarr;</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
