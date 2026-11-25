@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLOSSARY — Bushey Arches Regional Log &amp; Anti-Eyesore Engineering</title>
+  <style>
+    :root {
+      --paper: #d5d4ca;
+      --paper-alt: #c7c5b9;
+      --ink: #161714;
+      --red: #b52323;
+      --green: #1e6b3a;
+      --rule: #a6a395;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background-color: var(--paper);
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.055'/%3E%3C/svg%3E"),
+        radial-gradient(circle at 18% 12%, rgba(86, 98, 76, 0.11), transparent 55%),
+        radial-gradient(circle at 84% 78%, rgba(106, 91, 74, 0.11), transparent 60%);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Shared Top Navigation Panel */
+    .site-nav {
+      background: var(--ink);
+      color: var(--paper);
+      font-family: var(--mono);
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      border-bottom: 3px solid var(--red);
+    }
+    .site-nav-inner {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .nav-links { display: flex; gap: 0.65rem; flex-wrap: wrap; }
+    .nav-links a {
+      color: var(--paper);
+      text-decoration: none;
+      padding: 0.3rem 0.65rem;
+      border: 1px solid rgba(245,242,235,0.35);
+    }
+    .nav-links a.active {
+      background: var(--red);
+      border-color: var(--red);
+      font-weight: 700;
+    }
+    .nav-links a:hover:not(.active) {
+      background: rgba(245,242,235,0.14);
+    }
+
+    .wrap {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 1.5rem 1.25rem 5rem;
+    }
+
+    /* Masthead */
+    .masthead {
+      border-top: 4px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      padding: 1.25rem 0 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .masthead-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    h1 {
+      font-family: var(--mono);
+      font-size: clamp(1.65rem, 3.8vw, 2.5rem);
+      line-height: 1.05;
+      margin: 0;
+      text-transform: uppercase;
+      letter-spacing: -0.03em;
+    }
+    .kicker-tag {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      color: var(--red);
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    .lead-desc {
+      margin: 0.85rem 0 0;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--rule);
+      font-size: 0.96rem;
+      max-width: 78ch;
+    }
+
+    /* Filter & Search Controls */
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--paper-alt);
+      border: 1.5px solid var(--ink);
+      padding: 0.85rem 1rem;
+      margin-bottom: 1.75rem;
+    }
+    .search-box {
+      flex: 1 1 260px;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 0.55rem 0.75rem;
+      font-family: var(--mono);
+      font-size: 0.82rem;
+      border: 1.5px solid var(--ink);
+      background: #e5e4db;
+      color: var(--ink);
+    }
+    .filter-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .pill {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      text-transform: uppercase;
+      padding: 0.4rem 0.7rem;
+      border: 1.5px solid var(--ink);
+      background: var(--paper);
+      color: var(--ink);
+      cursor: pointer;
+    }
+    .pill.active {
+      background: var(--ink);
+      color: var(--paper);
+      font-weight: 700;
+    }
+    .pill:hover:not(.active) {
+      background: var(--red);
+      border-color: var(--red);
+      color: var(--paper);
+    }
+
+    /* Term Grid */
+    .glossary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.15rem;
+    }
+    .term-card {
+      border: 1.5px solid var(--ink);
+      background: #e0dfd6;
+      padding: 1.05rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .term-card.hidden { display: none; }
+    .term-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      margin-bottom: 0.35rem;
+    }
+    .term-cat {
+      color: var(--red);
+      font-weight: 700;
+    }
+    .term-site {
+      opacity: 0.75;
+    }
+    .term-card h2 {
+      font-family: var(--mono);
+      font-size: 1rem;
+      margin: 0 0 0.5rem;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--rule);
+      padding-bottom: 0.35rem;
+    }
+    .term-card p {
+      font-size: 0.88rem;
+      margin: 0 0 0.65rem;
+    }
+    .term-context {
+      font-size: 0.82rem;
+      background: var(--paper-alt);
+      border-left: 3px solid var(--ink);
+      padding: 0.5rem 0.7rem;
+      margin-top: auto;
+    }
+    .term-context strong {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      color: var(--green);
+    }
+    .empty-msg {
+      display: none;
+      font-family: var(--mono);
+      font-size: 0.88rem;
+      padding: 1.5rem;
+      border: 1.5px dashed var(--ink);
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    /* Footer */
+    .refs {
+      font-family: var(--mono);
+      font-size: 0.73rem;
+      line-height: 1.55;
+      border-top: 2px solid var(--ink);
+      padding-top: 1rem;
+      margin-top: 2.5rem;
+    }
+    .refs h3 { font-size: 0.8rem; text-transform: uppercase; margin: 0 0 0.5rem; }
+    .refs ul { margin: 0; padding-left: 1.15rem; }
+    .refs li { margin-bottom: 0.25rem; }
+
+    @media (max-width: 820px) {
+      .glossary-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="site-nav" aria-label="Bushey Arches Regional Sites">
+  <div class="site-nav-inner">
+    <span><strong>Bushey Arches Regional Log</strong> // Linked Calendar</span>
+    <div class="nav-links">
+      <a href="index.html">Site A: King Billy</a>
+      <a href="adjacent-ecology.html">Site B: Adjacent Ecology</a>
+      <a href="manifesto.html">Manifesto &amp; Action</a>
+      <a href="is-it-that-deep.html">Is It That Deep?</a>
+      <a href="glossary.html" class="active">Glossary</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <header class="masthead">
+    <div class="masthead-top">
+      <h1>Plain-English Glossary</h1>
+      <div class="kicker-tag">Planning Law · Ecology · Heritage · Meanwhile Use</div>
+    </div>
+    <p class="lead-desc">
+      Planning portals, land registries, and ecological surveys are full of jargon that keeps local residents out of decisions about their own streets. This reference translates every statutory, ecological, and historical term used across the <strong>Bushey Arches Regional Log</strong> into plain English.
+    </p>
+  </header>
+
+  <section class="controls" aria-label="Filter Glossary Terms">
+    <div class="search-box">
+      <input type="search" id="glossary-search" placeholder="Search terms (e.g. Section 215, SIPP, Pyrophilous, LiDAR)...">
+    </div>
+    <div class="filter-pills" role="group" aria-label="Category filter">
+      <button class="pill active" data-cat="all">All</button>
+      <button class="pill" data-cat="planning">Planning &amp; Law</button>
+      <button class="pill" data-cat="ecology">Ecology &amp; Mycology</button>
+      <button class="pill" data-cat="heritage">Heritage &amp; Corridor</button>
+      <button class="pill" data-cat="community">Meanwhile Use &amp; Craft</button>
+    </div>
+  </section>
+
+  <section class="glossary-grid" id="glossary-grid">
+
+    <!-- PLANNING & LAW -->
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A</span></div>
+        <h2>Section 215 Notice</h2>
+        <p>A legal power under Section 215 of the <strong>Town and Country Planning Act 1990</strong> allowing a local council to require a property owner to clean up, secure, and repair land or buildings whose condition harms the amenity (appearance and safety) of the neighbourhood.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Dated before-and-after photos (late 2025 &rarr; Nov 2026) prove 317&ndash;319 Lower High Street is actively worsening, giving Watford Borough Council clear grounds to serve a notice.</div>
+    </article>
+
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A</span></div>
+        <h2>Class MA / Prior Approval (26/00641/CTR)</h2>
+        <p>A national Permitted Development right allowing commercial buildings (Class E) to convert into residential flats via a lighter &ldquo;prior approval&rdquo; check rather than a full planning application.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Prior approval to convert King Billy into 8 one-bedroom flats was granted on <strong>9 Oct 2026</strong> (alongside <code>26/00402/FUL</code>), yet the building remained unsecured and stalled on the ground through Nov 2026.</div>
+    </article>
+
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A</span></div>
+        <h2>SIPP (Self-Invested Personal Pension)</h2>
+        <p>A UK pension wrapper that allows individuals or trustees to hold commercial property as a tax-advantaged investment asset.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Land Registry Title <code>HD367505</code> shows 317&ndash;319 Lower High Street is held by a private pension trust (AJ Bell SIPP), explaining why it can sit vacant on paper while deteriorating in public view.</div>
+    </article>
+
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>Biodiversity Net Gain (BNG)</h2>
+        <p>A mandatory requirement under the <strong>Environment Act 2021</strong> that qualifying developments leave biodiversity in a measurably better state (at least +10%) than before.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Our makerspace alternative pairs indoor community craft with modular living walls and a green corridor along Bushey Arches to deliver immediate ecological value.</div>
+    </article>
+
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>Meanwhile-Use Licence (Tier 1 Pilot)</h2>
+        <p>A short-term, insured agreement allowing a community group or makerspace to occupy and care for a vacant property until permanent redevelopment actually begins—often saving the owner empty-property business rates and security costs.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Our Tier 1 Pilot proposes a lean <strong>&pound;2,500&ndash;&pound;5,000</strong> make-safe budget to turn King Billy&rsquo;s ground floor into an active community space.</div>
+    </article>
+
+    <article class="term-card" data-cat="planning">
+      <div>
+        <div class="term-meta"><span class="term-cat">Planning &amp; Law</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>Heras Fencing</h2>
+        <p>Temporary galvanized steel mesh panels set in concrete or rubber blocks, used to cordon off construction sites or derelict land.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Around Chalk Hill and Bushey Arches, &ldquo;temporary&rdquo; Heras fencing has become a multi-year fixture—symbolising stalled land speculation rather than active building.</div>
+    </article>
+
+    <!-- ECOLOGY & MYCOLOGY -->
+    <article class="term-card" data-cat="ecology">
+      <div>
+        <div class="term-meta"><span class="term-cat">Ecology &amp; Mycology</span><span class="term-site">Site B</span></div>
+        <h2>Pyrophilous Fungi</h2>
+        <p>&ldquo;Fire-loving&rdquo; fungi (such as cup-like <em>Pezizales</em> species) whose spores are triggered by heat and alkaline ash, allowing them to colonise burned substrates rapidly after a fire.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Days after the <strong>April 2026</strong> mattress arson at the rear of the adjacent warehouse (Site B), pyrophilous fungi were documented fruiting directly among the charred springs.</div>
+    </article>
+
+    <article class="term-card" data-cat="ecology">
+      <div>
+        <div class="term-meta"><span class="term-cat">Ecology &amp; Mycology</span><span class="term-site">Site B</span></div>
+        <h2>Niche Ecology &amp; Pioneer Biology</h2>
+        <p>The first hardy organisms—fungi, mosses, lichens, and wind-blown shrubs—that colonise disturbed, post-industrial, or burned urban ground and begin breaking down debris into living soil.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> From spontaneous shrubs on King Billy&rsquo;s concrete ledge to post-fire fungi in Site B, pioneer biology proves regeneration is already underway if we choose to steward it.</div>
+    </article>
+
+    <article class="term-card" data-cat="ecology">
+      <div>
+        <div class="term-meta"><span class="term-cat">Ecology &amp; Mycology</span><span class="term-site">Site B</span></div>
+        <h2>LiDAR (Light Detection &amp; Ranging)</h2>
+        <p>A remote-sensing method that uses pulsed laser light to measure distances and generate accurate 3D spatial floorplans and point clouds of interior spaces.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Used to document the interior footprint (<strong>est. 663 m&sup2;</strong>) and April 2026 arson zone of the adjacent Bushey Arches warehouse on Site B.</div>
+    </article>
+
+    <!-- HERITAGE & CORRIDOR -->
+    <article class="term-card" data-cat="heritage">
+      <div>
+        <div class="term-meta"><span class="term-cat">Heritage &amp; Corridor</span><span class="term-site">Site A</span></div>
+        <h2>King William IV (&ldquo;King Billy&rdquo;)</h2>
+        <p>The historic pub at 317&ndash;319 Lower High Street, first recorded in <strong>1832</strong> as a beer house and operating as a neighbourhood gathering place for <strong>127 years</strong> until 1959.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> It predated the Bushey Arches railway viaduct and served the navvies who built it—anchoring over a century of working-class civic life at this corner.</div>
+    </article>
+
+    <article class="term-card" data-cat="heritage">
+      <div>
+        <div class="term-meta"><span class="term-cat">Heritage &amp; Corridor</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>Bushey Arches Viaduct</h2>
+        <p>The Grade II listed brick railway viaduct engineered by <strong>Robert Stephenson</strong> between <strong>1834 and 1837</strong> for the London and Birmingham Railway (later LMS), spanning the River Colne valley.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Both Site A and Site B sit directly beneath its arches—making the corridor a daily visual gateway between Watford, Bushey, and Oxhey.</div>
+    </article>
+
+    <article class="term-card" data-cat="heritage">
+      <div>
+        <div class="term-meta"><span class="term-cat">Heritage &amp; Corridor</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>WWII Outer London Defence Ring Pillbox</h2>
+        <p>A reinforced concrete Second World War defensive fortification built to guard key railway and road crossings around London&rsquo;s perimeter, located beside Bushey Arches.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Highlighted by Adam Parsons in the <em>Watford Observer</em> (27 Jan 2012) as a symbol of local heritage met with &ldquo;a padlock and a fading sign about security&rdquo; instead of invention and care.</div>
+    </article>
+
+    <article class="term-card" data-cat="heritage">
+      <div>
+        <div class="term-meta"><span class="term-cat">Heritage &amp; Corridor</span><span class="term-site">Site A</span></div>
+        <h2>Chalk Hill Car Park</h2>
+        <p>The former council car park and waste-transfer corridor at Bushey Arches, labelled an &ldquo;eyesore&rdquo; and dumping ground in the <em>Watford Observer</em> on <strong>8 Dec 2017</strong>.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Nearly nine years after the council said it was &ldquo;looking at the future use,&rdquo; adjacent plots have been marketed for &pound;7 million while local makers still lack space.</div>
+    </article>
+
+    <!-- COMMUNITY & PRACTICE -->
+    <article class="term-card" data-cat="community">
+      <div>
+        <div class="term-meta"><span class="term-cat">Meanwhile Use &amp; Craft</span><span class="term-site">Site A &amp; B</span></div>
+        <h2>Anti-Eyesore Engineering</h2>
+        <p>An evidence-led civic stewardship practice combining statutory planning tools (Section 215), hands-on repair, ecological prototyping, and open documentation to turn neglected urban corners into public workshops.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Rather than waiting for speculative redevelopment, it wraps stalled sites in visible care, craft, and accountability.</div>
+    </article>
+
+    <article class="term-card" data-cat="community">
+      <div>
+        <div class="term-meta"><span class="term-cat">Meanwhile Use &amp; Craft</span><span class="term-site">Site A</span></div>
+        <h2>Public Sound &amp; Civic Lineage</h2>
+        <p>Watford&rsquo;s documented history of grassroots music and gathering spaces—including landmark UK Grime nights (<strong>Sidewinder 2002</strong> at Ocean; <strong>Eskimo Dance 2002&ndash;2005</strong> at Area) and present-day repair/music collectives like <em>Good Vibrations Watford</em>.</p>
+      </div>
+      <div class="term-context"><strong>Why it matters here:</strong> Demonstrates that Watford has an active, proven cultural base ready to use ground-floor workshop and sound space if doors are opened.</div>
+    </article>
+
+  </section>
+
+  <div class="empty-msg" id="empty-msg">No glossary terms match that search. Try clearing the filter.</div>
+
+  <footer class="refs">
+    <h3>Statutory, Planning &amp; Archival References</h3>
+    <ul>
+      <li><strong>Town and Country Planning Act 1990 (Section 215):</strong> Power to require proper maintenance of land adversely affecting neighbourhood amenity.</li>
+      <li><strong>Environment Act 2021 (Biodiversity Net Gain):</strong> Statutory +10% Biodiversity Net Gain framework for qualifying developments in England.</li>
+      <li><strong>Watford Planning Portal &amp; HM Land Registry:</strong> Applications <code>26/00641/CTR</code> (Class MA, approved 9 Oct 2026) and <code>26/00402/FUL</code>; Title <code>HD367505</code> (317&ndash;319 Lower High St, WD17 2JD).</li>
+      <li><strong>Local Press &amp; Heritage:</strong> Adam Parsons, &ldquo;Declining heritage a bitter pillbox to take,&rdquo; <em>Watford Observer</em> (27 Jan 2012); <em>Watford Observer</em> (8 Dec 2017) on Chalk Hill car park.</li>
+    </ul>
+  </footer>
+</div>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById('glossary-search');
+    const pills = document.querySelectorAll('.pill');
+    const cards = document.querySelectorAll('.term-card');
+    const emptyMsg = document.getElementById('empty-msg');
+    let activeCat = 'all';
+
+    function filterTerms() {
+      const q = searchInput.value.trim().toLowerCase();
+      let visible = 0;
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-cat');
+        const text = card.textContent.toLowerCase();
+        const matchCat = (activeCat === 'all' || cat === activeCat);
+        const matchText = (!q || text.includes(q));
+        if (matchCat && matchText) {
+          card.classList.remove('hidden');
+          visible++;
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+      emptyMsg.style.display = visible === 0 ? 'block' : 'none';
+    }
+
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        activeCat = pill.getAttribute('data-cat');
+        filterTerms();
+      });
+    });
+
+    searchInput.addEventListener('input', filterTerms);
+  })();
+</script>
+</body>
+</html>
